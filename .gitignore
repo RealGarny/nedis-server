@@ -1,0 +1,16 @@
+# Сборка
+bin/
+obj/
+ 
+# Локальная БД (если вдруг останется от SQLite)
+*.db
+ 
+# IDE
+.vs/
+*.user
+ 
+# Секреты:
+# appsettings.json и appsettings.Development.json КОММИТИМ (несекретные + локальный dev).
+# Прод-секреты сюда не кладём вообще — они приходят из env / user-secrets.
+appsettings.Production.json
+appsettings.*.Local.json
