@@ -1,4 +1,4 @@
-namespace Nedis.Server.Modules.Identity.Domain.Entities;
+namespace Nedis.Server.Modules.Identity.Domain;
 
 public class User
 {

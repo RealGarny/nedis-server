@@ -1,3 +1,5 @@
+name: nedis
+
 services:
   db:
     image: postgres:18 # или новее — закрепляй мажорную версию явно, не latest
@@ -9,9 +11,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data # данные переживают пересоздание контейнера
+      - pgdata:/var/lib/postgresql # данные переживают пересоздание контейнера
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chat -d nedisdb"]
+      test: ["CMD-SHELL", "pg_isready -U nedisroot -d nedisdb"]
       interval: 5s
       timeout: 3s
       retries: 10

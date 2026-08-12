@@ -1,8 +1,8 @@
 
 using Microsoft.EntityFrameworkCore;
-using Nedis.Server.Modules.Identity.Domain.Entities;
+using Nedis.Server.Modules.Identity.Domain;
 
-namespace Nedis.Server.Modules.Identity.Data;
+namespace Nedis.Server.Modules.Identity.Infrastructure.Data;
 
 public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : DbContext(options)
 {
@@ -14,6 +14,7 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : Db
     {
         modelBuilder.HasDefaultSchema("identity");
 
+        modelBuilder.Entity<User>().HasKey((e) => e.Id);
         modelBuilder.Entity<User>(e =>
         {
             e.Property(u => u.Login).HasMaxLength(32);

@@ -2,5 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/Nedis.Server.Api/Nedis.Server.Api.csproj" />
     <Project Path="src/Nedis.Server.Modules.Identity/Nedis.Server.Modules.Identity.csproj" />
+    <Project Path="src/Nedis.Server.Common/Nedis.Server.Common.csproj" />
   </Folder>
 </Solution>
