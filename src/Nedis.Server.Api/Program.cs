@@ -24,7 +24,7 @@ builder.Services
             ValidIssuer = jwt["Issuer"],
             ValidAudience = jwt["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
-            ClockSkew = TimeSpan.FromSeconds(30), // допуск на рассинхрон часов (дефолт 5 минут — слишком щедро)
+            ClockSkew = TimeSpan.FromSeconds(30),
         };
     });
 
