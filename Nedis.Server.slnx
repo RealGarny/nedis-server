@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Nedis.Server.Api/Nedis.Server.Api.csproj" />
+    <Project Path="src/Nedis.Server.Modules.Identity/Nedis.Server.Modules.Identity.csproj" />
+    <Project Path="src/Nedis.Server.Common/Nedis.Server.Common.csproj" />
+
+    <!-- Tests -->
+    <!-- Tests/Identity -->
+    <Project Path="src/tests/Nedis.Server.Modules.Identity.IntegrationTests/Nedis.Server.Modules.Identity.IntegrationTests.csproj"/>
+    <Project Path="src/tests/Nedis.Server.Modules.Identity.Tests/Nedis.Server.Modules.Identity.Tests.csproj"/>
+  </Folder>
+</Solution>
