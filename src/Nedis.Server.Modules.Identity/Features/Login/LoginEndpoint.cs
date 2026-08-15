@@ -8,9 +8,9 @@ internal static class LoginEndpoint
 {
     public static void Map(IEndpointRouteBuilder app)
     {
-        app.MapPost("/login", async (LoginRequest req, ILoginService loginService) =>
+        app.MapPost("/login", async (LoginRequest req, ILoginService loginService, CancellationToken ct) =>
         {
-            var result = await loginService.LoginAsync(req);
+            var result = await loginService.LoginAsync(req, ct);
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)

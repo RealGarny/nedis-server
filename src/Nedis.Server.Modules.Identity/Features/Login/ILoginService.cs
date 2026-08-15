@@ -5,5 +5,5 @@ namespace Nedis.Server.Modules.Identity.Features.Login;
 
 public interface ILoginService
 {
-    Task<ServiceResult<AuthResponse, LoginError>> LoginAsync(LoginRequest request);
+    Task<ServiceResult<AuthResponse, LoginError>> LoginAsync(LoginRequest request, CancellationToken ct);
 }

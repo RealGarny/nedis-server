@@ -15,9 +15,9 @@ internal class LoginService(
 {
     private static readonly string DummyPasswordHash =
             new PasswordHasher<User>().HashPassword(new User(), "dummy-password-for-timing-safety");
-    public async Task<ServiceResult<AuthResponse, LoginError>> LoginAsync(LoginRequest loginDto)
+    public async Task<ServiceResult<AuthResponse, LoginError>> LoginAsync(LoginRequest loginDto, CancellationToken ct)
     {
-        User? user = await userRepository.GetByLoginAsync(loginDto.Login);
+        User? user = await userRepository.GetByLoginAsync(loginDto.Login, ct);
 
         //check if user exists
         if (user?.LocalCredential is null)
