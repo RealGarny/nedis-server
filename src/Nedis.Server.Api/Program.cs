@@ -29,6 +29,7 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddValidation();
 
 builder.Services.AddCors(options =>
 {
