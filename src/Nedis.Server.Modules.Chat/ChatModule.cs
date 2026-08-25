@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Nedis.Server.Modules.Chat.Features.CreateChannel;
 using Nedis.Server.Modules.Chat.Features.ListChannels;
+using Nedis.Server.Modules.Chat.Hubs;
 using Nedis.Server.Modules.Chat.Infrastructure.Data;
 using Nedis.Server.Modules.Chat.Infrastructure.Repositories;
 
@@ -13,6 +14,7 @@ public static class ChatModule
 {
     public static IServiceCollection AddChatModule(this IServiceCollection services, string connectionString)
     {
+        services.AddSignalR();
         services.AddDbContext<ChatDbContext>(o =>
             o.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__ef_migrations_history", "chat")));
@@ -31,6 +33,8 @@ public static class ChatModule
 
         CreateChannelEndpoint.Map(chatGroup);
         ListChannelsEndpoint.Map(chatGroup);
+
+        app.MapHub<ChatHub>("hub/chat");
 
         return app;
     }
