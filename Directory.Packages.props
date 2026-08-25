@@ -4,6 +4,11 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
+  <!--Common Package dependencies-->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.11" />
+  </ItemGroup>
+
   <!-- module dependencies-->
   <ItemGroup>
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />

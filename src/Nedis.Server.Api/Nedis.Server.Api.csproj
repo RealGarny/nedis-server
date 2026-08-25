@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nedis.Server.Modules.Identity\Nedis.Server.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Nedis.Server.Modules.Chat\Nedis.Server.Modules.Chat.csproj" />
   </ItemGroup>
 
   <ItemGroup>
