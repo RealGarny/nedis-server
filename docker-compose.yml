@@ -5,8 +5,8 @@ services:
     image: postgres:18
     restart: unless-stopped
     environment:
-      POSTGRES_USER: nedisroot
-      POSTGRES_PASSWORD: nedis_password
+      POSTGRES_USER: nedisdbuser
+      POSTGRES_PASSWORD: nedisdbuserpassword
       POSTGRES_DB: nedisdb
     ports:
       - "5432:5432"
