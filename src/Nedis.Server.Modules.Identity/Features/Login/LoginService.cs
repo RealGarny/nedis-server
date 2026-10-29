@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Nedis.Server.Common;
 using Nedis.Server.Modules.Identity.Domain;
-using Nedis.Server.Modules.Identity.Infrastructure.Jwt;
 using Nedis.Server.Modules.Identity.Infrastructure.Repositories;
+using Nedis.Server.Modules.Identity.Infrastructure.Tokens;
 using Nedis.Server.Modules.Identity.Shared;
 
 namespace Nedis.Server.Modules.Identity.Features.Login;
 
 internal class LoginService(
     IUsersRepository userRepository,
-    IUserTokenService tokenService,
+    ISessionIssuer sessions,
     IPasswordHasher<User> hasher
     ) : ILoginService
 {
@@ -37,8 +37,11 @@ internal class LoginService(
         {
             user.LocalCredential.PasswordHash = hasher.HashPassword(user, loginDto.Password);
         }
+        //create a new session for the user
+        var response = sessions.StartSession(user);
         await userRepository.SaveChangesAsync();
+
         //return credentials
-        return ServiceResult<AuthResponse, LoginError>.Success(new AuthResponse(tokenService.Issue(user), user.Id, user.Login));
+        return ServiceResult<AuthResponse, LoginError>.Success(response);
     }
 }

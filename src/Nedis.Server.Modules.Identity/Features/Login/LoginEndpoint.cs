@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
+using Nedis.Server.Common.Web;
 namespace Nedis.Server.Modules.Identity.Features.Login;
 
 internal static class LoginEndpoint
@@ -14,7 +15,7 @@ internal static class LoginEndpoint
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)
-                : Results.Unauthorized();
+                : ApiProblem.Create(StatusCodes.Status401Unauthorized, "invalid_credentials", "Invalid login or password.");
         });
     }
 }

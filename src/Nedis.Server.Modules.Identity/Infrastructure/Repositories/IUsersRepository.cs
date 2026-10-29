@@ -6,6 +6,8 @@ public interface IUsersRepository
 {
     Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
+    Task<User?> GetWithCredentialAsync(Guid id, CancellationToken ct = default);
+
     Task<User?> GetByLoginAsync(string login, CancellationToken ct = default);
 
     Task<User?> GetByGlobalIdentityAsync(string issuer, string subject, CancellationToken ct = default);

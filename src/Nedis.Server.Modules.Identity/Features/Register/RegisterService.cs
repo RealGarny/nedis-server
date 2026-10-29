@@ -4,13 +4,14 @@ using Nedis.Server.Common;
 using Nedis.Server.Modules.Identity.Domain;
 using Nedis.Server.Modules.Identity.Infrastructure.Jwt;
 using Nedis.Server.Modules.Identity.Infrastructure.Repositories;
+using Nedis.Server.Modules.Identity.Infrastructure.Tokens;
 using Nedis.Server.Modules.Identity.Shared;
 
 namespace Nedis.Server.Modules.Identity.Features.Register;
 
 internal class RegisterService(
     IUsersRepository userRepository,
-    IUserTokenService tokenService,
+    ISessionIssuer sessions,
     IPasswordHasher<User> hasher
     ) : IRegisterService
 {
@@ -27,7 +28,10 @@ internal class RegisterService(
             PasswordHash = hasher.HashPassword(user, request.Password),
         };
 
-        var createdUser = userRepository.Add(user);
+        userRepository.Add(user);
+
+        AuthResponse response = sessions.StartSession(user);
+
         try
         {
             await userRepository.SaveChangesAsync();
@@ -37,7 +41,9 @@ internal class RegisterService(
             return ServiceResult<AuthResponse, RegisterError>.Failure(RegisterError.UserAlreadyExists);
         }
 
-        return ServiceResult<AuthResponse, RegisterError>.Success(
-            new AuthResponse(tokenService.Issue(createdUser), createdUser.Id, createdUser.Login));
+
+        await userRepository.SaveChangesAsync();
+
+        return ServiceResult<AuthResponse, RegisterError>.Success(response);
     }
 }

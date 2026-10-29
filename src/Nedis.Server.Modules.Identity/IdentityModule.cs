@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Nedis.Server.Modules.Identity.Domain;
 using Nedis.Server.Modules.Identity.Features.Login;
 using Nedis.Server.Modules.Identity.Features.Register;
@@ -27,6 +28,8 @@ public static class IdentityModule
 
         //utilites
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddMemoryCache(); // grace window responses; safe to call more than once
 
         //repositories
         services.AddScoped<IUsersRepository, EfUsersRepository>();
