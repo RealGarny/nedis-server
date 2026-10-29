@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nedis.Server.Common\Nedis.Server.Common.csproj" />
+    <ProjectReference Include="..\Nedis.Server.Common.Web\Nedis.Server.Common.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

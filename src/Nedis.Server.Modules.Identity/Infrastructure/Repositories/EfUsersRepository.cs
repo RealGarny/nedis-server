@@ -9,6 +9,9 @@ class EfUsersRepository(IdentityDbContext db) : IUsersRepository
     public Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         db.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
 
+    public Task<User?> GetWithCredentialAsync(Guid id, CancellationToken ct = default) =>
+        db.Users.Include(u => u.LocalCredential).FirstOrDefaultAsync(u => u.Id == id, ct);
+
     public Task<User?> GetByLoginAsync(string login, CancellationToken ct = default) =>
         db.Users.Include(u => u.LocalCredential).FirstOrDefaultAsync(u => u.Login == login, ct);
 
