@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Nedis.Server.Common;
 using Nedis.Server.Modules.Identity.Domain;
-using Nedis.Server.Modules.Identity.Infrastructure.Jwt;
 using Nedis.Server.Modules.Identity.Infrastructure.Repositories;
 using Nedis.Server.Modules.Identity.Infrastructure.Tokens;
 using Nedis.Server.Modules.Identity.Shared;
