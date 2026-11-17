@@ -8,9 +8,19 @@ namespace Nedis.Server.Modules.Identity.Infrastructure.Tokens;
 
 internal readonly record struct RefreshTokenParts(Guid SessionId, int Generation, string SecretHash);
 
+// Refresh token format: {sessionId}.{generation}.{secret}.{mac}
+//
+// - sessionId and generation let the server find the session row and tell
+//   the current token from an old one without storing every token ever issued;
+// - the MAC makes them unforgeable. Without it anyone who learned a session id
+//   could craft a token with an old generation and get that session revoked;
+// - the secret proves possession. Its hash is compared with the stored one,
+//   so a leaked signing key alone is not enough to use someone's session.
+//
+// Clients treat the whole string as opaque.
 class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
 {
-    private readonly byte[] _key = Encoding.UTF8.GetBytes(options.Value.SignInKey);
+    private readonly byte[] _key = Encoding.UTF8.GetBytes(options.Value.SigningKey);
 
     public string Encode(Guid sessionId, int generation, out string secretHash)
     {
@@ -18,14 +28,13 @@ class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
         var body = string.Create(CultureInfo.InvariantCulture, $"{sessionId:N}.{generation}.{secret}");
 
         secretHash = HashSecret(secret);
-
         return $"{body}.{Base64Url.EncodeToString(Sign(body))}";
     }
 
+    // False for anything we did not issue: garbage, truncated or tampered tokens.
     public bool TryDecode(string? raw, out RefreshTokenParts parts)
     {
         parts = default;
-
         if (string.IsNullOrEmpty(raw))
             return false;
 
@@ -34,7 +43,6 @@ class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
             return false;
 
         var body = raw[..lastDot];
-
         if (!MacMatches(body, raw.AsSpan(lastDot + 1)))
             return false;
 
@@ -53,7 +61,7 @@ class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
 
         if (secretSpan.IsEmpty
             || !Guid.TryParseExact(sessionSpan, "N", out var sessionId)
-            || !int.TryParse(generationSpan, out var generation)
+            || !int.TryParse(generationSpan, NumberStyles.None, CultureInfo.InvariantCulture, out var generation)
         )
             return false;
 
