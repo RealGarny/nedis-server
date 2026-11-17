@@ -23,44 +23,38 @@ internal partial class RefreshService(
     public async Task<ServiceResult<AuthResponse, RefreshError>> RefreshAsync(RefreshRequest request, CancellationToken ct)
     {
         if (!codec.TryDecode(request.RefreshToken, out var presented))
-        {
             return Failure(RefreshError.InvalidToken);
-        }
 
         var session = await sessions.GetWithUserAsync(presented.SessionId, ct);
         var now = time.GetUtcNow();
 
         if (session is null || session.RevokedAt is not null || session.ExpiresAt <= now)
-        {
             return Failure(RefreshError.InvalidToken);
-        }
 
-        AuthResponse? response = null;
-        int generationDelta = session.Generation - presented.Generation;
+        AuthResponse response;
 
-        if (generationDelta > 1 || !RefreshTokenCodec.HashesEqual(presented.SecretHash, session.CurrentHash))
+        if (presented.Generation == session.Generation && RefreshTokenCodec.HashesEqual(presented.SecretHash, session.CurrentHash))
         {
-            await sessions.RevokeAsync(session.Id, now, ct);
+            response = issuer.Rotate(session);
+        }
+        else if (presented.Generation == session.Generation - 1 &&
+                session.PreviousHash is not null &&
+                RefreshTokenCodec.HashesEqual(presented.SecretHash, session.PreviousHash))
+        {
+            if (session.RotatedAt is { } rotatedAt && now - rotatedAt <= GraceWindow)
+            {
+                return graceCache.TryGetValue(GraceKey(presented.SecretHash), out AuthResponse? cached) && cached is not null
+                    ? Success(cached)
+                    : Failure(RefreshError.ExchangeInProgress);
+            }
+            response = issuer.Reissue(session);
+        }
+        else
+        {
             LogRefreshTokenReuse(logger, session.Id, session.UserId);
             return Failure(RefreshError.InvalidToken);
         }
 
-        switch (generationDelta)
-        {
-            case 0:
-                response = issuer.Rotate(session);
-                break;
-            case 1:
-                if (session.RotatedAt is not { } || now - session.RotatedAt > GraceWindow)
-                {
-                    LogRefreshTokenReuse(logger, session.Id, session.UserId);
-                    return Failure(RefreshError.InvalidToken);
-                }
-
-                return graceCache.TryGetValue(GraceKey(presented.SecretHash), out AuthResponse? cached) && cached is not null
-                    ? Success(cached)
-                    : Failure(RefreshError.ExchangeInProgress);
-        }
         try
         {
             await sessions.SaveChangesAsync(ct);
@@ -70,10 +64,7 @@ internal partial class RefreshService(
             return Failure(RefreshError.ExchangeInProgress);
         }
 
-        if (response is null)
-        {
-            return Failure(RefreshError.Unexpected);
-        }
+        graceCache.Set(GraceKey(presented.SecretHash), response, GraceWindow);
         return Success(response);
     }
 
