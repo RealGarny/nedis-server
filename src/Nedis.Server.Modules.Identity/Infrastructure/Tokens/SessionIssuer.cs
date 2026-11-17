@@ -46,7 +46,7 @@ class SessionIssuer(
 
     public AuthResponse Reissue(Session session)
     {
-        var now = time.GetLocalNow();
+        var now = time.GetUtcNow();
 
         session.RotatedAt = now;
 
