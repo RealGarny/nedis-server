@@ -24,6 +24,8 @@ class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
 
     public string Encode(Guid sessionId, int generation, out string secretHash)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(generation);
+
         var secret = Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32));
         var body = string.Create(CultureInfo.InvariantCulture, $"{sessionId:N}.{generation}.{secret}");
 
@@ -35,7 +37,9 @@ class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
     public bool TryDecode(string? raw, out RefreshTokenParts parts)
     {
         parts = default;
-        if (string.IsNullOrEmpty(raw))
+
+        // Reject oversized input before allocating or computing the MAC.
+        if (string.IsNullOrEmpty(raw) || raw.Length > 131)
             return false;
 
         var lastDot = raw.LastIndexOf('.');
@@ -43,6 +47,7 @@ class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
             return false;
 
         var body = raw[..lastDot];
+
         if (!MacMatches(body, raw.AsSpan(lastDot + 1)))
             return false;
 
@@ -59,9 +64,10 @@ class RefreshTokenCodec(IOptions<RefreshTokenOptions> options)
         var generationSpan = bodySpan[(firstDotIdx + 1)..secondsDotIdx];
         var secretSpan = bodySpan[(secondsDotIdx + 1)..];
 
-        if (secretSpan.IsEmpty
+        if (secretSpan.Length != 43
             || !Guid.TryParseExact(sessionSpan, "N", out var sessionId)
             || !int.TryParse(generationSpan, NumberStyles.None, CultureInfo.InvariantCulture, out var generation)
+            || generation <= 0
         )
             return false;
 
