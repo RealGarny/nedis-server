@@ -6,7 +6,7 @@ using Nedis.Server.Modules.Identity;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
-    ?? throw new InvalidOperationException("ConnectionString:Defauld is not defined");
+    ?? throw new InvalidOperationException("ConnectionString:Default is not defined");
 
 // Modules
 builder.Services.AddIdentityModule(builder.Configuration, connectionString);
