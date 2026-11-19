@@ -30,7 +30,7 @@ class SessionIssuer(
 
         sessions.Add(session);
 
-        return Issue(session, now);
+        return Issue(session, now, extendLifetime: true);
     }
 
     public AuthResponse Rotate(Session session)
@@ -39,9 +39,9 @@ class SessionIssuer(
 
         session.PreviousHash = session.CurrentHash;
         session.RotatedAt = now;
-        session.Generation++;
+        session.Generation = checked(session.Generation + 1);
 
-        return Issue(session, now);
+        return Issue(session, now, extendLifetime: true);
     }
 
     public AuthResponse Reissue(Session session)
@@ -50,16 +50,17 @@ class SessionIssuer(
 
         session.RotatedAt = now;
 
-        return Issue(session, now);
+        return Issue(session, now, extendLifetime: false);
     }
 
-    private AuthResponse Issue(Session session, DateTimeOffset now)
+    private AuthResponse Issue(Session session, DateTimeOffset now, bool extendLifetime)
     {
         var refreshToken = codec.Encode(session.Id, session.Generation, out var secretHash);
 
         session.CurrentHash = secretHash;
         session.LastUsedAt = now;
-        session.ExpiresAt = now.AddDays(refreshOptions.Value.LifetimeDays);
+        if (extendLifetime)
+            session.ExpiresAt = now.AddDays(refreshOptions.Value.LifetimeDays);
 
         return new AuthResponse(
             AccessToken: accessTokens.Issue(session.User),
