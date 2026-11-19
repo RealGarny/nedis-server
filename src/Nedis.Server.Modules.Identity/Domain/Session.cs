@@ -22,7 +22,7 @@ public class Session
     // Updated on every exchange. Groundwork for a "devices" list.
     public DateTimeOffset LastUsedAt { get; set; }
 
-    // Sliding: moved forward on every exchange.
+    // Sliding: moved forward on start and rotation, not on recovery.
     public DateTimeOffset ExpiresAt { get; set; }
 
     // Logout, password change or detected theft. Revoked sessions never come back.
@@ -40,7 +40,7 @@ public class Session
     // current token. Kept for the grace window and for crash recovery.
     public string? PreviousHash { get; set; }
 
-    // When the previous token was exchanged: start of its grace window.
+    // When the current token was issued: start of the grace window.
     public DateTimeOffset? RotatedAt { get; set; }
 
     // Optimistic concurrency token. Npgsql maps a uint row version onto

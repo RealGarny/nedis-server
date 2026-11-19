@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Nedis.Server.Modules.Identity.Domain;
 using Nedis.Server.Modules.Identity.Features.Login;
+using Nedis.Server.Modules.Identity.Features.Refresh;
 using Nedis.Server.Modules.Identity.Features.Register;
 using Nedis.Server.Modules.Identity.Infrastructure.Background;
 using Nedis.Server.Modules.Identity.Infrastructure.Data;
@@ -39,7 +40,7 @@ public static class IdentityModule
         // Fails at startup.
         services.AddOptions<RefreshTokenOptions>()
             .Bind(config.GetSection("RefreshTokens"))
-            .Validate(o => Encoding.UTF8.GetByteCount(o.SignInKey) >= 32,
+            .Validate(o => Encoding.UTF8.GetByteCount(o.SigningKey) >= 32,
                 "RefreshTokens:SigningKey must be at least 32 bytes."
             )
             .ValidateOnStart();
@@ -47,6 +48,7 @@ public static class IdentityModule
         //architecture
         services.AddScoped<IUserTokenService, UserTokenService>();
         services.AddScoped<ISessionIssuer, SessionIssuer>();
+        services.AddSingleton<RefreshTokenCodec>();
 
         //repositories
         services.AddScoped<IUsersRepository, EfUsersRepository>();

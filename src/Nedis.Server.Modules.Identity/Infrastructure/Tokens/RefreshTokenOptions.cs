@@ -13,5 +13,5 @@ class RefreshTokenOptions
     // Secret, at least 32 bytes. Signs refresh tokens so the session id and
     // generation inside them cannot be forged. Separate from the JWT key:
     // changing it signs every user out, which should be a deliberate decision.
-    public string SignInKey { get; set; } = string.Empty;
+    public string SigningKey { get; set; } = string.Empty;
 }

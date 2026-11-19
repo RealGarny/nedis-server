@@ -16,7 +16,7 @@ internal static class RefreshEndpoint
 
             return result.Error switch
             {
-                RefreshError.InvalidToken => ApiProblem.Create(StatusCodes.Status401Unauthorized, "invalid_token", "The refresh token is invalid."),
+                RefreshError.InvalidToken => ApiProblem.Create(StatusCodes.Status401Unauthorized, "invalid_refresh_token", "The refresh token is invalid."),
                 RefreshError.ExchangeInProgress => ApiProblem.Create(StatusCodes.Status409Conflict, "refresh_in_progress", "The token is being exchanged. Retry shortly."),
                 _ => ApiProblem.Create(StatusCodes.Status500InternalServerError, "unexpected", "A server error occured during operation."),
             };
