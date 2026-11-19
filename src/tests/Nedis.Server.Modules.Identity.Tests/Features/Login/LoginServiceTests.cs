@@ -3,19 +3,30 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Nedis.Server.Modules.Identity.Domain;
 using Nedis.Server.Modules.Identity.Features.Login;
-using Nedis.Server.Modules.Identity.Infrastructure.Jwt;
 using Nedis.Server.Modules.Identity.Infrastructure.Repositories;
+using Nedis.Server.Modules.Identity.Infrastructure.Tokens;
+using Nedis.Server.Modules.Identity.Shared;
 using NSubstitute;
+using NSubstitute.Core;
 
 namespace Nedis.Server.Modules.Identity.Tests.Features.Login;
 
 public class LoginServiceTests
 {
     private readonly IUsersRepository _repository = Substitute.For<IUsersRepository>();
-    private readonly IUserTokenService _tokenService = Substitute.For<IUserTokenService>();
+    private readonly ISessionIssuer _issuer = Substitute.For<ISessionIssuer>();
     private readonly IPasswordHasher<User> _hasher = new PasswordHasher<User>();
 
-    private LoginService CreateSut() => new(_repository, _tokenService, _hasher);
+    private LoginService CreateSut()
+    {
+        _issuer.StartSession(Arg.Any<User>()).Returns(call =>
+        {
+            var user = call.Arg<User>();
+            return new AuthResponse("fake-jwt-token", "fake-refresh-tokem", 900, user.Id, user.Login);
+        });
+
+        return new(_repository, _issuer, _hasher);
+    }
 
     private User CreateUserWithPassword(string login, string password)
     {
@@ -33,7 +44,6 @@ public class LoginServiceTests
     {
         var user = CreateUserWithPassword("alice", "password123");
         _repository.GetByLoginAsync("alice", TestContext.Current.CancellationToken).Returns(user);
-        _tokenService.Issue(user).Returns("fake-jwt-token");
 
         var result = await CreateSut().LoginAsync(new LoginRequest("alice", "password123"), TestContext.Current.CancellationToken);
 
@@ -78,7 +88,6 @@ public class LoginServiceTests
         var oldHash = user.LocalCredential.PasswordHash;
 
         _repository.GetByLoginAsync("alice", ct).Returns(user);
-        _tokenService.Issue(user).Returns("token");
 
         var result = await CreateSut().LoginAsync(new LoginRequest("alice", "password123"), ct);
 
