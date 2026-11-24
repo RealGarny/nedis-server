@@ -7,9 +7,6 @@ namespace Nedis.Server.Modules.Identity.IntegrationTests.Features.Register;
 [Collection(nameof(IdentityApiCollection))]
 public class RegisterEndpointTests(IdentityApiFixture fixture)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-
-    private record AuthResponseDto(string AccessToken, Guid UserId, string Login);
 
     private static string UniqueLogin() => $"user_{Guid.NewGuid():N}"[..24];
 
@@ -21,9 +18,14 @@ public class RegisterEndpointTests(IdentityApiFixture fixture)
         var response = await fixture.Client.PostAsJsonAsync("/api/auth/register", new { login, password = "password123" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(JsonOptions, TestContext.Current.CancellationToken);
+
+        // response body checks
+        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(body);
-        Assert.False(string.IsNullOrWhiteSpace(body!.AccessToken));
+        Assert.False(string.IsNullOrWhiteSpace(body.AccessToken));
+        Assert.False(string.IsNullOrWhiteSpace(body.RefreshToken));
+        Assert.True(body.ExpiresIn > 0);
+        Assert.NotEqual(Guid.Empty, body.UserId);
         Assert.Equal(login, body.Login);
     }
 
@@ -31,11 +33,11 @@ public class RegisterEndpointTests(IdentityApiFixture fixture)
     public async Task Register_DuplicateLogin_ReturnsBadRequest()
     {
         var login = UniqueLogin();
-        await fixture.Client.PostAsJsonAsync("/api/auth/register", new { login, password = "password123" }, TestContext.Current.CancellationToken);
+        using var first = await fixture.Client.PostAsJsonAsync("/api/auth/register", new { login, password = "password123" }, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
 
         var second = await fixture.Client.PostAsJsonAsync("/api/auth/register", new { login, password = "password456" }, TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
     }
 
     [Theory]
