@@ -35,6 +35,7 @@ public static class IdentityModule
         // TryAdd: tests register a FakeTimeProvider before calling AddIdentityModule.
         services.TryAddSingleton(TimeProvider.System);
         services.AddMemoryCache(); // grace window responses; safe to call more than once
+        services.AddValidation();
 
         //options
         // Fails at startup.

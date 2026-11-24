@@ -3,6 +3,12 @@ using System.ComponentModel.DataAnnotations;
 namespace Nedis.Server.Modules.Identity.Features.Register;
 
 public record RegisterRequest(
-    [Required, MinLength(3), MaxLength(32)] string Login,
-    [Required, MinLength(8)] string Password
+    [property: Required]
+    [property: MinLength(3)]
+    [property: MaxLength(32)]
+    string Login,
+
+    [property: Required]
+    [property: MinLength(8)]
+    string Password
 );
