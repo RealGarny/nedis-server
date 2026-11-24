@@ -7,14 +7,18 @@ namespace Nedis.Server.Modules.Identity.IntegrationTests.Features.Login;
 [Collection(nameof(IdentityApiCollection))]
 public class LoginEndpointTests(IdentityApiFixture fixture)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-
-    private record AuthResponseDto(string AccessToken, Guid UserId, string Login);
 
     private static string UniqueLogin() => $"user_{Guid.NewGuid():N}"[..24];
 
-    private async Task RegisterAsync(string login, string password) =>
-        await fixture.Client.PostAsJsonAsync("/api/auth/register", new { login, password });
+    private async Task RegisterAsync(string login, string password)
+    {
+        using var response = await fixture.Client.PostAsJsonAsync(
+            "/api/auth/register",
+            new { login, password },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
 
     [Fact]
     public async Task Login_CorrectCredentials_Returns200WithToken()
@@ -25,8 +29,15 @@ public class LoginEndpointTests(IdentityApiFixture fixture)
         var response = await fixture.Client.PostAsJsonAsync("/api/auth/login", new { login, password = "password123" }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(JsonOptions, TestContext.Current.CancellationToken);
-        Assert.False(string.IsNullOrWhiteSpace(body!.AccessToken));
+
+        //response body checks
+        var body = await response.Content.ReadFromJsonAsync<AuthResponseDto>(cancellationToken: TestContext.Current.CancellationToken);
+        Assert.NotNull(body);
+        Assert.False(string.IsNullOrWhiteSpace(body.AccessToken));
+        Assert.False(string.IsNullOrWhiteSpace(body.RefreshToken));
+        Assert.True(body.ExpiresIn > 0);
+        Assert.NotEqual(Guid.Empty, body.UserId);
+        Assert.Equal(login, body.Login);
     }
 
     [Fact]
@@ -43,10 +54,6 @@ public class LoginEndpointTests(IdentityApiFixture fixture)
     [Fact]
     public async Task Login_UnknownLogin_Returns401_NotServerError()
     {
-        // Сквозная регрессия end-to-end: тот же баг тайминг-маскировки, что и в
-        // юнит-тестах LoginService, но здесь проверяем весь путь через HTTP —
-        // включая сериализацию и то, что реальный конвейер не превращает
-        // необработанное исключение в неожиданный 500.
         var response = await fixture.Client.PostAsJsonAsync(
             "/api/auth/login", new { login = UniqueLogin(), password = "whatever12" }, TestContext.Current.CancellationToken);
 

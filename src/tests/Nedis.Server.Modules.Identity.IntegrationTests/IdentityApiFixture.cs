@@ -9,13 +9,16 @@ public sealed class IdentityApiFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17")
         .WithDatabase("identity_test")
-        .WithUsername("chat")
-        .WithPassword("chat_test_password")
+        .WithUsername("user")
+        .WithPassword("password")
         .Build();
 
-    private WebApplication _app = null!;
+    private WebApplication? _app;
+    public HttpClient? _client;
+    private bool _started = false;
 
-    public HttpClient Client { get; private set; } = null!;
+    public HttpClient Client => _client
+        ?? throw new InvalidOperationException("The integration test fixture has not been initialized.");
 
     public async ValueTask InitializeAsync()
     {
@@ -27,6 +30,9 @@ public sealed class IdentityApiFixture : IAsyncLifetime
                 ["Jwt:Issuer"] = "identity-tests",
                 ["Jwt:Audience"] = "identity-tests",
                 ["Jwt:SigningKey"] = "integration-test-signing-key-32-bytes-min!!",
+                ["RefreshTokens:SigningKey"] = "integration-test-refresh-key-at-least-32-bytes",
+                ["RefreshTokens:LifetimeDays"] = "30",
+                ["RefreshTokens:GraceWindowSeconds"] = "10",
             })
             .Build();
 
@@ -39,6 +45,7 @@ public sealed class IdentityApiFixture : IAsyncLifetime
         _app.MapIdentityModule();
 
         await _app.StartAsync();
+        _started = true;
 
         // Tip: for this to work you should create a migration for your latest dbContext
         using (var scope = _app.Services.CreateScope())
@@ -47,14 +54,24 @@ public sealed class IdentityApiFixture : IAsyncLifetime
             await db.Database.MigrateAsync();
         }
 
-        Client = _app.GetTestClient();
+        _client = _app.GetTestClient();
     }
 
     public async ValueTask DisposeAsync()
     {
-        Client.Dispose();
-        await _app.StopAsync();
-        await _app.DisposeAsync();
+        _client?.Dispose();
+        if (_app is not null)
+        {
+            try
+            {
+                if (_started)
+                    await _app.StopAsync();
+            }
+            finally
+            {
+                await _app.DisposeAsync();
+            }
+        }
         await _postgres.DisposeAsync();
     }
 }

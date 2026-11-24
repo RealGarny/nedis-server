@@ -55,6 +55,57 @@ namespace Nedis.Server.Modules.Identity.Migrations
                     b.ToTable("LocalCredentials", "identity");
                 });
 
+            modelBuilder.Entity("Nedis.Server.Modules.Identity.Domain.Session", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Generation")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PreviousHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("RotatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Sessions", "identity");
+                });
+
             modelBuilder.Entity("Nedis.Server.Modules.Identity.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -93,6 +144,17 @@ namespace Nedis.Server.Modules.Identity.Migrations
                     b.HasOne("Nedis.Server.Modules.Identity.Domain.User", "User")
                         .WithOne("LocalCredential")
                         .HasForeignKey("Nedis.Server.Modules.Identity.Domain.LocalCredential", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nedis.Server.Modules.Identity.Domain.Session", b =>
+                {
+                    b.HasOne("Nedis.Server.Modules.Identity.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
